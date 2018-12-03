@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>动画-方块下落</title>
+    <style type="text/css">
+        body {
+            padding: 0;
+            margin-top: 40px;
+            text-align: center;
+        }
+        #blockCanvas {
+            border: 4px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">0</div>
+    <canvas id="blockCanvas" width="240" height="420"></canvas>
+    <script type="text/javascript">
+        var canvas = document.getElementById("blockCanvas");
+        var context = canvas.getContext("2d");
+
+        var img = new Image();
+        img.src = "images/cell.png";
+        img.x = 0;
+        img.y = 0;
+        // 为什么设置图片宽高不起作用
+        // img.width = 40;
+        // img.height = 40;
+
+        //绘制初始位置的方块
+        context.drawImage(img,0,0);
+
+        // 事件控制方块下落
+        document.onkeydown = function(event){
+            if(event.keyCode == 40){  //方向键:向下
+                // 重绘
+                // 清除画布
+                context.clearRect(0,0,240,420);
+                img.y = img.y + 20;
+                // 为什么不起作用
+                // context.drawImage(img,img.x,img.y);
+                context.drawImage(img,0,20);
+            }
+        };
+    </script>
+</body>
+</html>

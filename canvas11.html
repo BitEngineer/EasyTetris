@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>动画-方块移动-面向对象</title>
+    <style type="text/css">
+        body {
+            padding: 0;
+            margin-top: 40px;
+            text-align: center;
+        }
+        #blockCanvas {
+            border: 4px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">0</div>
+    <div><button id="startBtn">开始</button></div>
+    <canvas id="blockCanvas" width="240" height="420"></canvas>
+    <script type="text/javascript">
+        var canvas = document.getElementById("blockCanvas");
+        var context = canvas.getContext("2d");
+
+        // 说明:如果写成这样,block不能初始化,不是面向对象的风格
+        // var block = {};
+        // block.image = "";
+
+        // 用构造函数的方式,构建面向对象风格
+        function Block(image){
+            this.image = image;
+            this.x = 0;
+            this.y = 0;
+            // 为Block增加下落函数---执行失败
+            /*
+            this.down = function(){
+                context.clearRect(this.x,this.y,20,20);
+                if(this.y >= 400){  // 控制方块移动范围
+                    this.y = 400;
+                }else{
+                    this.y = this.y + 20;
+                }
+                context.drawImage(this.image,this.x,this.y);
+            };
+            */
+        };
+
+        function genImageObj(imgPath){
+            var img = new Image();
+            img.src = imgPath;
+            return img;
+        };
+
+        var cellImg = genImageObj("images/cell.png");
+        var block = new Block(cellImg);
+        //绘制初始位置的方块
+        context.drawImage(block.image,block.x,block.y);
+        
+
+        // 键盘控制方块移动
+        document.onkeydown = function(event){
+            if(event.keyCode == 40){  //方向键:向下
+                // 重绘
+                // 清除画布
+                context.clearRect(0,0,240,420);
+                if(block.y >= 400){  // 控制方块移动范围
+                    block.y = 400;
+                }else{
+                    block.y = block.y + 20;
+                }
+                context.drawImage(block.image,block.x,block.y);
+            }
+            if(event.keyCode == 37){  // 方向键:向左
+                // 重绘
+                // 清除画布
+                context.clearRect(0,0,240,420);
+                if(block.x == 0){  // 控制方块移动范围
+                    block.x = 0;
+                }else{
+                    block.x = block.x - 20;
+                }
+                context.drawImage(block.image,block.x,block.y);
+            }
+            if(event.keyCode == 39){  //方向键:向右
+                // 重绘
+                // 清除画布
+                context.clearRect(0,0,240,420);
+                if(block.x == 220){  // 控制方块移动范围
+                    block.x = 220;
+                }else{
+                    block.x = block.x + 20;
+                }
+                context.drawImage(block.image,block.x,block.y);
+            }
+        };
+
+        function blockDown(){
+            // 重绘
+            // 清除画布
+            context.clearRect(0,0,240,420);
+            if(block.y >= 400){  // 控制方块移动范围
+                block.y = 400;
+            }else{
+                block.y = block.y + 20;
+            }
+            context.drawImage(block.image,block.x,block.y);
+        };
+
+        // 方块按时间间隔下落---按开始按钮之后
+        var startBtn = document.getElementById("startBtn");
+        startBtn.onclick = function(){
+            setInterval(blockDown,500);
+        };
+    </script>
+</body>
+</html>

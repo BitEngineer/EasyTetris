@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>图形-方块组合绘制-面向对象</title>
+    <style type="text/css">
+        body {
+            padding: 0;
+            margin-top: 40px;
+            text-align: center;
+        }
+        #blockCanvas {
+            border: 4px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">0</div>
+    <div><button id="startBtn">开始</button></div>
+    <canvas id="blockCanvas" width="240" height="420"></canvas>
+    <script type="text/javascript">
+       
+        /**
+         * 俄罗斯方块对象---使用构造函数实现面向对象
+         */
+        function Blocks(type,x,y){
+            this.type = type;  // 方块形状代码
+            this.x = x;  // 初始横坐标
+            this.y = y;  // 初始纵坐标
+            this.width = 20;  // 坐标单位长度
+            this.shape = [];
+            this.initShape = function(){
+                switch(this.type){
+                    case 1 :  // 1
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x , j: this.y+2},
+                            {i: this.x , j: this.y+3}
+                        ];
+                        break;
+                    case 2 :  // 上
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x-1 , j: this.y+1},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x+1 , j: this.y+1}
+                        ];
+                        break;
+                    case 3 :  // L
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x , j: this.y+2},
+                            {i: this.x+1 , j: this.y+2}
+                        ];
+                        break;
+                    case 4 : // 田
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x+1 , j: this.y},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x+1 , j: this.y+1}
+                        ];
+                        break;
+                    case 5 :  // 楼梯
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x+1 , j: this.y},
+                            {i: this.x-1 , j: this.y+1},
+                            {i: this.x , j: this.y+1}
+                        ];
+                        break;
+                }
+            };
+            this.drawBlocks = function(context,img){
+               for(var n=0; n<4; n++){
+                    context.drawImage(img,this.shape[n].i*this.width,this.shape[n].j*this.width);
+               }
+            };
+        };
+
+        
+        var game = {};
+        game.start = function(){
+            var canvas = document.getElementById("blockCanvas");
+            var context = canvas.getContext("2d");
+
+            var img = new Image();
+            img.src = "images/cell.png";
+
+            // 图片和其他资源包括js代码的载入是异步的,因此为了保证js代码能绘制图片,必须等图片加载完之后再执行
+            img.onload = function(){
+                var oneBlocks = new Blocks(1, 2, 1);
+                oneBlocks.initShape();
+                oneBlocks.drawBlocks(context,img);
+
+                var twoBlocks = new Blocks(2,5,1);
+                twoBlocks.initShape();
+                twoBlocks.drawBlocks(context,img);
+
+                var threeBlocks = new Blocks(3,10,1);
+                threeBlocks.initShape();
+                threeBlocks.drawBlocks(context,img);
+
+                var fourBlocks = new Blocks(4,5,10);
+                fourBlocks.initShape();
+                fourBlocks.drawBlocks(context,img);
+
+                var fiveBlocks = new Blocks(5,10,10);
+                fiveBlocks.initShape();
+                fiveBlocks.drawBlocks(context,img);
+            };  
+
+        };
+
+        game.start();
+        
+    </script>
+</body>
+</html>

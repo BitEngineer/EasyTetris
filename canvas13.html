@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>动画-方块组合移动-面向对象</title>
+    <style type="text/css">
+        body {
+            padding: 0;
+            margin-top: 40px;
+            text-align: center;
+        }
+        #blockCanvas {
+            border: 4px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">0</div>
+    <div><button id="startBtn">开始</button></div>
+    <canvas id="blockCanvas" width="240" height="420"></canvas>
+    <script type="text/javascript">
+
+        /**
+         * 俄罗斯方块对象---使用构造函数实现面向对象
+         */
+        function Blocks(type,x,y){
+            this.type = type;  // 方块形状代码
+            this.x = x;  // 初始横坐标
+            this.y = y;  // 初始纵坐标
+            this.width = 20;  // 坐标单位长度
+            this.shape = [];
+            this.initShape = function(){
+                switch(this.type){
+                    case 1 :  // 1
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x , j: this.y+2},
+                            {i: this.x , j: this.y+3}
+                        ];
+                        break;
+                    case 2 :  // 上
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x-1 , j: this.y+1},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x+1 , j: this.y+1}
+                        ];
+                        break;
+                    case 3 :  // L
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x , j: this.y+2},
+                            {i: this.x+1 , j: this.y+2}
+                        ];
+                        break;
+                    case 4 : // 田
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x+1 , j: this.y},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x+1 , j: this.y+1}
+                        ];
+                        break;
+                    case 5 :  // 楼梯
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x+1 , j: this.y},
+                            {i: this.x-1 , j: this.y+1},
+                            {i: this.x , j: this.y+1}
+                        ];
+                        break;
+                }
+            };
+            this.drawBlocks = function(context,img){
+               for(var n=0; n<4; n++){
+                    context.drawImage(img,this.shape[n].i*this.width,this.shape[n].j*this.width);
+               }
+            };
+            this.drop = function(){
+                for(var n=0; n<4; n++){
+                    this.shape[n].j += 1;
+                }
+            };
+            this.toLeft = function(){
+                for(var n=0; n<4; n++){
+                    this.shape[n].i -= 1;
+                }
+            };
+            this.rotate = function(){
+                // 无论形状如何,将第二个方块作为旋转中心
+                var center = this.shape[1];
+                for(var n=0; n<4; n++){
+                    if(n==2){
+                        break;
+                    }
+                    this.shape[n] = this.rotatePoint(center,this.shape[n]);
+                }
+            };
+            this.clearBlocksImg = function(context){
+                for(var n=0; n<4; n++){
+                    context.clearRect(this.shape[n].i*this.width,this.shape[n].j*this.width,this.width,this.width);
+                }
+            };
+        };
+
+        
+        var game = {};
+        game.start = function(){
+            // 图片时静态资源,可以放在全局变量中,那么久可以在整个浏览器生命周期中访问
+            // 全部变量的命名格式 windowVariable
+            window.windowImg = new Image();
+            windowImg.src = "images/cell.png";
+
+            windowImg.onload = function(){
+                // 图片加载完之后要做的事,因此要在该函数内能够访问关于图形绘制的一些变量 
+               game.run(); 
+            }; 
+
+        };
+
+        game.run = function(){
+            var canvas = document.getElementById("blockCanvas");
+            var context = canvas.getContext("2d");
+
+            // 一个方块组合的生命周期
+            var twoBlocks = new Blocks(2,5,1);
+            twoBlocks.initShape();
+            twoBlocks.drawBlocks(context,windowImg);
+
+            document.onkeydown = function(event){
+                if(event.keyCode == 40){  //下落
+                    //擦除原图像---注意一定要在移动之前擦除,因为移动之后坐标改变了
+                    twoBlocks.clearBlocksImg(context);
+                    //下落
+                    twoBlocks.drop();
+                    //重绘
+                    twoBlocks.drawBlocks(context,windowImg);
+                }
+                if(event.keyCode == 37){  //向左
+                    //擦除原图像
+                    twoBlocks.clearBlocksImg(context);
+                    //向左
+                    twoBlocks.toLeft();
+                    //重绘
+                    twoBlocks.drawBlocks(context,windowImg);
+                }
+                if(event.keyCode == 39){  //向右
+                    //擦除原图像
+                    twoBlocks.clearBlocksImg(context);
+                    //向右
+                    twoBlocks.toRight();
+                    //重绘
+                    twoBlocks.drawBlocks(context,windowImg);
+                }
+            };
+        };
+
+        game.start();
+
+        game.addListerner = function(){
+            // 必须在该函数总访问
+            
+        };
+        
+    </script>
+</body>
+</html>

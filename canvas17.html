@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>动画-方块组合移动-边界控制-随机产生方块-方块不重合-方块变形</title>
+    <style type="text/css">
+        body {
+            padding: 0;
+            margin-top: 40px;
+            text-align: center;
+        }
+        #blockCanvas {
+            border: 4px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">0</div>
+    <div><button id="startBtn">开始</button></div>
+    <canvas id="blockCanvas" width="240" height="420"></canvas>
+    <script type="text/javascript">
+
+        /**
+         * 一个点饶另一个点旋转的工具对象
+         * 点对象的标示方式 {i:xxx,j:yyy}
+         */
+        var retation = {
+            /**
+             * 一个点绕另一个点顺时针旋转90度---center为旋转中心
+             * 返回旋转后的点
+             */
+            clockwiseRotate : function(center,point){
+                return {i: -point.j + center.i + center.j, j: point.i - center.i + center.j};
+            },
+            /** 
+             * 一个点绕另一个点逆时针旋转90度---center为旋转中心
+             * 返回旋转后的点
+             */
+            counterclockwiseRotate : function(center,point){
+                return {i: point.j + center.i - center.j, j: -point.i + center.i + center.j};
+            }
+        };
+       
+        /**
+         * 俄罗斯方块类---使用构造函数实现面向对象
+         */
+        function Blocks(type,x,y){
+            // 方块形状代码
+            this.type = type; 
+            // 初始横坐标 
+            this.x = x;
+            // 初始纵坐标  
+            this.y = y;
+            // 坐标单位长度  
+            this.width = 20; 
+            /**
+             * 俄罗斯方块形状数组,存储了组成俄罗斯方块的四个小方块的位置
+             * 每个方块的位置由一个对象{i:,j:}表示
+             */ 
+            this.shape = [];  
+            // 初始化形状数组---不同type的方块形状不同
+            this.initShape = function(){
+                switch(this.type){
+                    case 1 :  // 1
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x , j: this.y+2},
+                            {i: this.x , j: this.y+3}
+                        ];
+                        break;
+                    case 2 :  // 上
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x-1 , j: this.y+1},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x+1 , j: this.y+1}
+                        ];
+                        break;
+                    case 3 :  // L
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x , j: this.y+2},
+                            {i: this.x+1 , j: this.y+2}
+                        ];
+                        break;
+                    case 4 : // 田
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x+1 , j: this.y},
+                            {i: this.x , j: this.y+1},
+                            {i: this.x+1 , j: this.y+1}
+                        ];
+                        break;
+                    case 5 :  // 楼梯
+                        this.shape = [
+                            {i: this.x , j: this.y},
+                            {i: this.x+1 , j: this.y},
+                            {i: this.x-1 , j: this.y+1},
+                            {i: this.x , j: this.y+1}
+                        ];
+                        break;
+                }
+            };
+            // 方块下落
+            this.drop = function(){
+                for(var n=0; n<4; n++){
+                    this.shape[n].j += 1;
+                }
+            };
+            // 方块上升
+            this.raise = function(){
+                for(var n=0; n<4; n++){
+                    this.shape[n].j -= 1;
+                }
+            };
+            // 方块左移
+            this.toLeft = function(){
+                for(var n=0; n<4; n++){
+                    this.shape[n].i -= 1;
+                }
+            };
+            // 方块右移
+            this.toRight = function(){
+                for(var n=0; n<4; n++){
+                    this.shape[n].i += 1;
+                }
+            };
+            // 顺时针旋转90度---不同的方块形状选择不同的旋转中心
+            this.clockwiseRotate = function(){
+                var center = {};
+                var point = {};
+                var centerIndex = -1;
+                switch(this.type){
+                    case 1:  // 1
+                        centerIndex = 2;
+                        break;
+                    case 2:  // 上
+                        centerIndex = 2;
+                        break;
+                    case 3:  // L
+                        centerIndex = 1;
+                        break;
+                    case 4:  // "田"型不旋转
+                        centerIndex = -1;
+                        break;
+                    case 5:  // 楼梯
+                        centerIndex = 3;
+                        break;
+                }
+                if(centerIndex == -1){
+                    return;
+                }
+                center = this.shape[centerIndex];
+                for(var n=0; n<4; n++){
+                    if(n==centerIndex){
+                        continue;
+                    }
+                    point = this.shape[n];
+                    this.shape[n] = retation.clockwiseRotate(center,point);
+                }
+            };
+            // 逆时针旋转90度---不同的方块形状选择不同的旋转中心
+            this.counterclockwiseRotate = function(){
+                var center = {};
+                var point = {};
+                var centerIndex = -1;
+                switch(this.type){
+                    case 1:  // 1
+                        centerIndex = 2;
+                        break;
+                    case 2:  // 上
+                        centerIndex = 2;
+                        break;
+                    case 3:  // L
+                        centerIndex = 1;
+                        break;
+                    case 4:  // "田"型不旋转
+                        centerIndex = -1;
+                        break;
+                    case 5:  // 楼梯
+                        centerIndex = 3;
+                        break;
+                }
+                if(centerIndex == -1){
+                    return;
+                }
+                center = this.shape[centerIndex];
+                for(var n=0; n<4; n++){
+                    if(n==centerIndex){
+                        continue;
+                    }
+                    point = this.shape[n];
+                    this.shape[n] = retation.counterclockwiseRotate(center,point);
+                }
+            };
+            // 绘制方块
+            this.drawBlocks = function(context,img){
+               for(var n=0; n<4; n++){
+                    context.drawImage(img,this.shape[n].i*this.width,this.shape[n].j*this.width);
+               }
+            };
+            // 清除已经绘制的方块图像
+            this.clearBlocksImg = function(context){
+                for(var n=0; n<4; n++){
+                    context.clearRect(this.shape[n].i*this.width,this.shape[n].j*this.width,this.width,this.width);
+                }
+            };
+        };
+
+        
+        /**
+         * 游戏对象
+         */
+        var game = {};
+        // 游戏画布
+        game.canvas = {};
+        // 游戏画布上下文
+        game.context = {};
+        // 游戏中的活动方块
+        game.blocks = {};
+        /**
+         * 游戏场地矩阵:用来标示哪些位置已经存在静止的方块
+         * 没有静态方块的地方用0标示,有的地方用1标示
+         */
+        game.gameGound = [];
+        // 场地矩阵初始化
+        game.initGameGound = function(){
+            for(var i=0; i<12; i++){
+                game.gameGound[i] = [];
+                for(var j=0; j<21; j++){
+                    game.gameGound[i][j] = 0;
+                }
+            }
+        };
+        // 开始游戏
+        game.start = function(){
+            // 初始化场地矩阵
+            game.initGameGound();
+
+            // 加载图片
+            // 图片为静态资源,可以放在全局变量中,那么久可以在整个浏览器生命周期中访问
+            // 全部变量的命名格式 windowVariable
+            window.windowImg = new Image();
+            windowImg.src = "images/cell.png";
+
+            windowImg.onload = function(){
+                // 运行游戏
+                game.run();
+            }; 
+
+        };
+        // 运行游戏---在静态资源初始化之后运行
+        game.run = function(){
+            game.canvas = document.getElementById("blockCanvas");
+            game.context = game.canvas.getContext("2d");
+
+            game.blocks = game.genBlocksRandom(5,0);
+            game.blocks.initShape();
+            game.blocks.drawBlocks(game.context,windowImg);
+
+            game.addListener();
+            
+        };
+        // 检测方块是否碰到游戏场地左边界
+        game.checkGameGoundLeft = function(blocks){
+            for(var n=0; n<4; n++){
+                if(blocks.shape[n].i == 0){  // 碰到
+                    return true;
+                }   
+            }
+            return false;
+        };
+        // 检测方块是否碰到游戏场地右边界
+        game.checkGameGoundRight = function(blocks){
+            for(var n=0; n<4; n++){
+                if(blocks.shape[n].i == 11){  // 碰到
+                    return true;
+                } 
+            }
+            return false;
+        };
+        // 检测方块是否碰到游戏场地底部
+        game.checkGameGoundBottom = function(blocks,context,img){
+            for(var n=0; n<4; n++){
+                if(blocks.shape[n].j == 20){  // 碰到
+                    // 方块不能再移动,成为静止方块
+                    // 刷新场地矩阵
+                    game.refreshGameGound(blocks);
+                    return true;
+                } 
+            }
+            return false;
+        };
+        // 方块下移的过程中,检测是否碰到静止方块
+        game.checkGameGoundBlocksDrop = function(blocks){
+            blocks.drop();
+            for(var n=0; n<4; n++){
+                if(game.gameGound[blocks.shape[n].i][blocks.shape[n].j] == 1){
+                    blocks.raise();
+                    game.refreshGameGound(blocks);
+                    return true;
+                }
+            }
+            blocks.raise();
+            return false;
+        };
+        // 方块左移的过程中,检测是否碰到静止方块
+        game.checkGameGoundBlocksToLeft = function(blocks){
+            blocks.toLeft();
+            for(var n=0; n<4; n++){
+                if(game.gameGound[blocks.shape[n].i][blocks.shape[n].j] == 1){
+                    blocks.toRight();
+                    return true;
+                }
+            }
+            blocks.toRight();
+            return false;
+        };
+        // 方块右移的过程中,检测是否碰到静止方块
+        game.checkGameGoundBlocksToRight = function(blocks){
+            blocks.toRight();
+            for(var n=0; n<4; n++){
+                if(game.gameGound[blocks.shape[n].i][blocks.shape[n].j] == 1){
+                    blocks.toLeft();
+                    return true;
+                }
+            }
+            blocks.toLeft();
+            return false;
+        };
+        /**
+         * 顺时针旋转时,检测是否超过边界,以及是否与静态方块重合
+         * 如果满足任何一个检测条件,返回true
+         * 应该旋转3次来检测,保证可以旋转回去
+         */
+         /*
+        game.checkGameGoundBlocksClockwiseRotate = function(blocks){
+            var flag = false;
+            for(var i=1; i<=3; i++){
+                // 顺时针旋转
+                blocks.clockwiseRotate();
+                // 检测左边界
+                for(var n=0; n<4; n++){
+                    if(blocks.shape[n].i < 0){
+                       flag = true;
+                    }
+                }
+                // 检测右边界
+                for(var n=0; n<4; n++){
+                    if(blocks.shape[n].i > 11){
+                        flag = true;
+                    }
+                }
+                // 检测上边界---上边界检测时要注意
+                for(var n=0; n<4; n++){
+                    if(blocks.shape[n].j < 0){
+                        flag = true;
+                    }
+                }
+                // 检测下边界
+                for(var n=0; n<4; n++){
+                    if(blocks.shape[n].i > 20){
+                        flag = true;
+                    }
+                }
+                // 检测静态方块重合
+                for(var n=0; n<4; n++){
+                    if(game.gameGound[blocks.shape[n].i][blocks.shape[n].j] == 1){
+                       flag = true;
+                    }
+                }
+            }
+            // 复位
+            blocks.clockwiseRotate();
+            return flag;
+        };
+        */
+        game.checkGameGoundBlocksClockwiseRotate = function(blocks){
+            // 顺时针旋转
+            blocks.clockwiseRotate();
+            // 检测左边界
+            for(var n=0; n<4; n++){
+                if(blocks.shape[n].i < 0){
+                    // 逆时针旋转
+                    blocks.counterclockwiseRotate();
+                    return true;
+                }
+            }
+            // 检测右边界
+            for(var n=0; n<4; n++){
+                if(blocks.shape[n].i > 11){
+                    blocks.counterclockwiseRotate();
+                    return true;
+                }
+            }
+            // 检测上边界---上边界检测时要注意
+            for(var n=0; n<4; n++){
+                if(blocks.shape[n].j < 0){
+                    blocks.counterclockwiseRotate();
+                    return true;
+                }
+            }
+            // 检测下边界
+            for(var n=0; n<4; n++){
+                if(blocks.shape[n].i > 20){
+                    blocks.counterclockwiseRotate();
+                    return true;
+                }
+            }
+            // 检测静态方块重合
+            for(var n=0; n<4; n++){
+                if(game.gameGound[blocks.shape[n].i][blocks.shape[n].j] == 1){
+                    blocks.counterclockwiseRotate();
+                    return true;
+                }
+            }
+            blocks.counterclockwiseRotate();
+            return false;
+        };
+        // 刷新场地矩阵---将传入方块位置处的矩阵值修改为1
+        game.refreshGameGound = function(blocks){
+            for(var n=0; n<4; n++){
+                game.gameGound[blocks.shape[n].i][blocks.shape[n].j] = 1;
+            }
+        };
+        // 随机产生一个方块
+        game.genBlocksRandom = function(initX,initY){
+            var ranNum = Math.floor(Math.random() * 5);
+            var blocks = new Blocks(ranNum+1,initX,initY);
+            return blocks;
+        };
+        // 注册事件
+        game.addListener = function(){
+            document.onkeydown = function(event){
+                if(event.keyCode == 40){  //下落
+                    if(!game.checkGameGoundBottom(game.blocks) && !game.checkGameGoundBlocksDrop(game.blocks)){  // 没有触及底边,且没有碰到静止方块
+                        //擦除原图像---注意一定要在移动之前擦除,因为移动之后坐标改变了
+                        game.blocks.clearBlocksImg(game.context);
+                        //下落
+                        game.blocks.drop();
+                        //重绘
+                        game.blocks.drawBlocks(game.context,windowImg);
+                        if(game.checkGameGoundBottom(game.blocks) || game.checkGameGoundBlocksDrop(game.blocks)){  // 跑到底边和静止方块,产生新方块
+                            game.blocks = game.genBlocksRandom(5,0);
+                            game.blocks.initShape();
+                            game.blocks.drawBlocks(game.context,windowImg);
+                        }
+                    }
+                }
+                if(event.keyCode == 37){  //向左
+                    if(!game.checkGameGoundBottom(game.blocks) && !game.checkGameGoundLeft(game.blocks) 
+                        && !game.checkGameGoundBlocksToLeft(game.blocks)){  // 没触及底边和左边,且没有碰到静止方块
+                        //擦除原图像
+                        game.blocks.clearBlocksImg(game.context);
+                        //向左
+                        game.blocks.toLeft();
+                        //重绘
+                        game.blocks.drawBlocks(game.context,windowImg);
+                        if(game.checkGameGoundBlocksDrop(game.blocks)){  // 特别注意:向左移动也会导致方块放在静止方块之上
+                            game.blocks = game.genBlocksRandom(5,0);
+                            game.blocks.initShape();
+                            game.blocks.drawBlocks(game.context,windowImg);
+                        }
+                    }
+                }
+                if(event.keyCode == 39){  //向右
+                    if(!game.checkGameGoundBottom(game.blocks) && !game.checkGameGoundRight(game.blocks) 
+                        && !game.checkGameGoundBlocksToRight(game.blocks)){  // 没触及底边和右边,且没有碰到静止方块
+                        //擦除原图像
+                        game.blocks.clearBlocksImg(game.context);
+                        //向右
+                        game.blocks.toRight();
+                        //重绘
+                        game.blocks.drawBlocks(game.context,windowImg);
+                        if(game.checkGameGoundBlocksDrop(game.blocks)){  // 特别注意:向右移动也会导致方块放在静止方块之上
+                            game.blocks = game.genBlocksRandom(5,0);
+                            game.blocks.initShape();
+                            game.blocks.drawBlocks(game.context,windowImg);
+                        }
+                    } 
+                }
+                if(event.keyCode == 38){  //顺时针旋转
+                    if(!game.checkGameGoundBlocksClockwiseRotate(game.blocks)){  // 边界检测和重合检测
+                        //擦除原图像
+                        game.blocks.clearBlocksImg(game.context);
+                        //旋转
+                        game.blocks.clockwiseRotate();
+                        //重绘
+                        game.blocks.drawBlocks(game.context,windowImg);
+                        if(game.checkGameGoundBlocksDrop(game.blocks)){  // 特别注意:旋转也会导致方块放在静止方块之上
+                            game.blocks = game.genBlocksRandom(5,0);
+                            game.blocks.initShape();
+                            game.blocks.drawBlocks(game.context,windowImg);
+                        }
+                    }
+                }
+            };
+        };
+
+        game.start();
+        
+    </script>
+</body>
+</html>
